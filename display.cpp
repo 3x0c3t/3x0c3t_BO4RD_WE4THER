@@ -1,86 +1,71 @@
 #include "display.h"
 
 #include <time.h>
-#include <math.h>
 
 #include "config.h"
 #include "locations.h"
 #include "weather.h"
 
-// ============================================================
-// CURRENT LOCATION
-// ============================================================
-//
-// Déclarée dans WE4THER.ino
-// Utilisée ici par l'affichage.
-//
-
-extern uint8_t currentLocation;
-
-// ============================================================
-// TFT
-// ============================================================
-
-TFT_eSPI tft =
-  TFT_eSPI();
+TFT_eSPI tft = TFT_eSPI();
 
 int SCREEN_W = 240;
 int SCREEN_H = 320;
 
-// ============================================================
-// CLOCK STATE
-// ============================================================
+static void printCentered(
+  const String& text,
+  int y,
+  int font,
+  uint16_t color
+) {
+  tft.setTextFont(font);
+  tft.setTextColor(color, COLOR_BG);
+  tft.setTextDatum(TC_DATUM);
 
-int lastDisplayedSecond = -1;
-int lastDisplayedMinute = -1;
-int lastDisplayedHour   = -1;
-
-// ============================================================
-// INIT DISPLAY
-// ============================================================
+  tft.drawString(
+    text,
+    SCREEN_W / 2,
+    y
+  );
+}
 
 void initDisplay() {
 
   tft.init();
 
-  tft.setRotation(
-    TFT_ROTATION
-  );
+  tft.setRotation(TFT_ROTATION);
 
-  SCREEN_W =
-    tft.width();
+  SCREEN_W = tft.width();
+  SCREEN_H = tft.height();
 
-  SCREEN_H =
-    tft.height();
+  tft.setTextWrap(false);
 
-  tft.setTextWrap(
-    false
-  );
+  tft.fillScreen(COLOR_BG);
+}
 
-  tft.fillScreen(
+void drawHeader() {
+
+  tft.fillRect(
+    0,
+    0,
+    SCREEN_W,
+    22,
     COLOR_BG
   );
 
-  Serial.print(
-    "TFT WIDTH  : "
+  printCentered(
+    "-3x0c3t- B04RD",
+    2,
+    2,
+    COLOR_PRIMARY
   );
 
-  Serial.println(
-    SCREEN_W
-  );
-
-  Serial.print(
-    "TFT HEIGHT : "
-  );
-
-  Serial.println(
-    SCREEN_H
+  tft.drawFastHLine(
+    0,
+    21,
+    SCREEN_W,
+    COLOR_DARKGREY
   );
 }
-
-// ============================================================
-// FLAG - FRANCE
-// ============================================================
 
 void drawFlagFrance(
   int x,
@@ -88,16 +73,14 @@ void drawFlagFrance(
   int w,
   int h
 ) {
-
-  int third =
-    w / 3;
+  int third = w / 3;
 
   tft.fillRect(
     x,
     y,
     third,
     h,
-    0x001F
+    TFT_BLUE
   );
 
   tft.fillRect(
@@ -121,13 +104,9 @@ void drawFlagFrance(
     y,
     w,
     h,
-    COLOR_GREY
+    COLOR_TEXT
   );
 }
-
-// ============================================================
-// FLAG - MEXICO
-// ============================================================
 
 void drawFlagMexico(
   int x,
@@ -135,9 +114,7 @@ void drawFlagMexico(
   int w,
   int h
 ) {
-
-  int third =
-    w / 3;
+  int third = w / 3;
 
   tft.fillRect(
     x,
@@ -163,11 +140,11 @@ void drawFlagMexico(
     TFT_RED
   );
 
-  tft.drawCircle(
+  tft.fillCircle(
     x + w / 2,
     y + h / 2,
     3,
-    0x8410
+    TFT_GREEN
   );
 
   tft.drawRect(
@@ -175,63 +152,48 @@ void drawFlagMexico(
     y,
     w,
     h,
-    COLOR_GREY
+    COLOR_TEXT
   );
 }
 
-// ============================================================
-// CURRENT FLAG
-// ============================================================
+void drawCurrentFlag(uint8_t locationIndex) {
 
-void drawCurrentFlag() {
-
-  const int flagW = 30;
-  const int flagH = 18;
-
-  const int flagX =
-    SCREEN_W / 2 - 67;
-
-  const int flagY =
-    48;
-
-  if (
-    currentLocation == 0
-  ) {
-
+  if (locationIndex == 0) {
     drawFlagFrance(
-      flagX,
-      flagY,
-      flagW,
-      flagH
+      8,
+      30,
+      34,
+      22
     );
-
   } else {
-
     drawFlagMexico(
-      flagX,
-      flagY,
-      flagW,
-      flagH
+      8,
+      30,
+      34,
+      22
     );
   }
 }
 
-// ============================================================
-// HEADER
-// ============================================================
+void drawLocation(uint8_t locationIndex) {
 
-void drawHeader() {
+  if (locationIndex >= LOCATION_COUNT) {
+    return;
+  }
 
-  tft.fillRect(
-    0,
-    0,
-    SCREEN_W,
-    23,
+  drawCurrentFlag(locationIndex);
+
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextFont(2);
+  tft.setTextColor(
+    COLOR_TEXT,
     COLOR_BG
   );
 
-  tft.setTextDatum(
-    TC_DATUM
+  tft.drawString(
+    locations[locationIndex].country,
+    50,
+    29
   );
 
   tft.setTextColor(
@@ -240,29 +202,60 @@ void drawHeader() {
   );
 
   tft.drawString(
-    "3x0c3t WE4THER",
-    SCREEN_W / 2,
-    3,
-    2
+    locations[locationIndex].name,
+    50,
+    44
   );
 
   tft.drawFastHLine(
-    8,
-    22,
-    SCREEN_W - 16,
-    COLOR_PRIMARY
+    0,
+    56,
+    SCREEN_W,
+    COLOR_DARKGREY
   );
 }
 
-// ============================================================
-// LOCATION
-// ============================================================
+void drawDateTime() {
 
-void drawLocation() {
+  time_t now = time(nullptr);
 
-  tft.setTextDatum(
-    TC_DATUM
+  struct tm* local = localtime(&now);
+
+  if (!local) {
+    return;
+  }
+
+  char dateBuffer[16];
+  char timeBuffer[16];
+
+  snprintf(
+    dateBuffer,
+    sizeof(dateBuffer),
+    "%02d/%02d/%04d",
+    local->tm_mday,
+    local->tm_mon + 1,
+    local->tm_year + 1900
   );
+
+  snprintf(
+    timeBuffer,
+    sizeof(timeBuffer),
+    "%02d:%02d:%02d",
+    local->tm_hour,
+    local->tm_min,
+    local->tm_sec
+  );
+
+  tft.fillRect(
+    0,
+    58,
+    SCREEN_W,
+    23,
+    COLOR_BG
+  );
+
+  tft.setTextDatum(TL_DATUM);
+  tft.setTextFont(2);
 
   tft.setTextColor(
     COLOR_TEXT,
@@ -270,105 +263,12 @@ void drawLocation() {
   );
 
   tft.drawString(
-    locations[currentLocation].name,
-    SCREEN_W / 2,
-    27,
-    3
-  );
-
-  drawCurrentFlag();
-
-  tft.setTextColor(
-    COLOR_SECONDARY,
-    COLOR_BG
-  );
-
-  tft.drawString(
-    locations[currentLocation].country,
-    SCREEN_W / 2 + 23,
-    51,
-    1
-  );
-}
-
-// ============================================================
-// DATE
-// ============================================================
-
-void drawDate() {
-
-  time_t now =
-    time(nullptr);
-
-  struct tm* localTime =
-    localtime(&now);
-
-  if (
-    !localTime
-  ) {
-    return;
-  }
-
-  char dateBuffer[32];
-
-  snprintf(
     dateBuffer,
-    sizeof(dateBuffer),
-    "%02d/%02d/%04d",
-    localTime->tm_mday,
-    localTime->tm_mon + 1,
-    localTime->tm_year + 1900
+    8,
+    61
   );
 
-  tft.setTextDatum(
-    TC_DATUM
-  );
-
-  tft.setTextColor(
-    COLOR_GREY,
-    COLOR_BG
-  );
-
-  tft.drawString(
-    dateBuffer,
-    SCREEN_W / 2,
-    72,
-    2
-  );
-}
-
-// ============================================================
-// CLOCK
-// ============================================================
-
-void drawClock() {
-
-  time_t now =
-    time(nullptr);
-
-  struct tm* localTime =
-    localtime(&now);
-
-  if (
-    !localTime
-  ) {
-    return;
-  }
-
-  char timeBuffer[16];
-
-  snprintf(
-    timeBuffer,
-    sizeof(timeBuffer),
-    "%02d:%02d:%02d",
-    localTime->tm_hour,
-    localTime->tm_min,
-    localTime->tm_sec
-  );
-
-  tft.setTextDatum(
-    TC_DATUM
-  );
+  tft.setTextDatum(TR_DATUM);
 
   tft.setTextColor(
     COLOR_PRIMARY,
@@ -377,15 +277,17 @@ void drawClock() {
 
   tft.drawString(
     timeBuffer,
-    SCREEN_W / 2,
-    88,
-    3
+    SCREEN_W - 8,
+    61
+  );
+
+  tft.drawFastHLine(
+    0,
+    82,
+    SCREEN_W,
+    COLOR_DARKGREY
   );
 }
-
-// ============================================================
-// WEATHER ICON
-// ============================================================
 
 void drawWeatherIcon(
   int x,
@@ -393,41 +295,31 @@ void drawWeatherIcon(
   int code
 ) {
 
-  if (
-    code == 0
-  ) {
+  if (code == 0) {
 
     tft.fillCircle(
       x,
       y,
-      12,
+      7,
       TFT_YELLOW
     );
 
-    for (
-      int i = 0;
-      i < 8;
-      i++
-    ) {
+    for (int i = 0; i < 8; i++) {
 
       float angle =
-        i * PI / 4.0;
+        i * 3.14159 / 4.0;
 
       int x1 =
-        x +
-        cos(angle) * 17;
+        x + cos(angle) * 10;
 
       int y1 =
-        y +
-        sin(angle) * 17;
+        y + sin(angle) * 10;
 
       int x2 =
-        x +
-        cos(angle) * 22;
+        x + cos(angle) * 14;
 
       int y2 =
-        y +
-        sin(angle) * 22;
+        y + sin(angle) * 14;
 
       tft.drawLine(
         x1,
@@ -441,189 +333,131 @@ void drawWeatherIcon(
     return;
   }
 
-  if (
-    code == 1 ||
-    code == 2 ||
-    code == 3
-  ) {
+  if (code >= 61 ||
+      (code >= 80 && code <= 82) ||
+      (code >= 95 && code <= 99)) {
 
     tft.fillCircle(
-      x - 10,
-      y + 3,
-      8,
+      x - 5,
+      y,
+      7,
       COLOR_GREY
     );
 
     tft.fillCircle(
-      x,
-      y - 3,
-      11,
-      COLOR_GREY
-    );
-
-    tft.fillCircle(
-      x + 11,
-      y + 3,
-      8,
+      x + 4,
+      y,
+      9,
       COLOR_GREY
     );
 
     tft.fillRect(
-      x - 17,
-      y + 3,
-      34,
-      9,
+      x - 10,
+      y,
+      20,
+      7,
       COLOR_GREY
+    );
+
+    tft.drawLine(
+      x - 6,
+      y + 10,
+      x - 8,
+      y + 15,
+      TFT_CYAN
+    );
+
+    tft.drawLine(
+      x,
+      y + 10,
+      x - 2,
+      y + 15,
+      TFT_CYAN
+    );
+
+    tft.drawLine(
+      x + 6,
+      y + 10,
+      x + 4,
+      y + 15,
+      TFT_CYAN
     );
 
     return;
   }
 
-  if (
-    code >= 51 &&
-    code <= 67
-  ) {
+  if (code >= 71 && code <= 77) {
 
     tft.fillCircle(
-      x - 9,
-      y - 2,
-      8,
-      COLOR_GREY
-    );
-
-    tft.fillCircle(
-      x,
-      y - 7,
-      10,
-      COLOR_GREY
-    );
-
-    tft.fillCircle(
-      x + 10,
-      y - 1,
+      x - 5,
+      y,
       7,
       COLOR_GREY
     );
 
-    tft.fillRect(
-      x - 14,
-      y - 1,
-      29,
-      9,
+    tft.fillCircle(
+      x + 4,
+      y,
+      8,
       COLOR_GREY
     );
 
-    for (
-      int i = -1;
-      i <= 1;
-      i++
-    ) {
+    for (int i = -1; i <= 1; i++) {
 
       tft.drawLine(
-        x + i * 9,
-        y + 12,
-        x + i * 9 - 3,
-        y + 20,
-        TFT_CYAN
+        x + i * 7,
+        y + 9,
+        x + i * 7,
+        y + 14,
+        TFT_WHITE
       );
     }
 
     return;
   }
 
-  tft.drawCircle(
-    x,
+  tft.fillCircle(
+    x - 5,
     y,
-    15,
-    COLOR_PRIMARY
+    7,
+    COLOR_GREY
   );
 
-  tft.setTextColor(
-    COLOR_PRIMARY,
-    COLOR_BG
-  );
-
-  tft.setTextDatum(
-    MC_DATUM
-  );
-
-  tft.drawString(
-    "?",
-    x,
+  tft.fillCircle(
+    x + 4,
     y,
-    2
+    8,
+    COLOR_GREY
+  );
+
+  tft.fillRect(
+    x - 10,
+    y,
+    20,
+    7,
+    COLOR_GREY
   );
 }
 
-// ============================================================
-// WEATHER
-// ============================================================
+void drawWeather(
+  uint8_t locationIndex
+) {
 
-void drawWeather() {
-
-  const int centerX =
-    SCREEN_W / 2;
-
-  const int iconY = 125;
-  const int tempY = 151;
-  const int descY = 178;
-  const int windY = 198;
-
-  if (
-    weather[currentLocation].valid
-  ) {
-
-    drawWeatherIcon(
-      centerX,
-      iconY,
-      weather[currentLocation].weatherCode
-    );
-
-  } else {
-
-    tft.setTextDatum(
-      TC_DATUM
-    );
-
-    tft.setTextColor(
-      COLOR_ERROR,
-      COLOR_BG
-    );
-
-    tft.drawString(
-      "NO WEATHER",
-      centerX,
-      tempY,
-      2
-    );
-
+  if (locationIndex >= LOCATION_COUNT) {
     return;
   }
 
-  char temperatureBuffer[24];
-
-  snprintf(
-    temperatureBuffer,
-    sizeof(temperatureBuffer),
-    "%.1f C",
-    weather[currentLocation].temperature
-  );
-
-  tft.setTextDatum(
-    TC_DATUM
-  );
-
-  tft.setTextColor(
-    COLOR_WARNING,
+  tft.fillRect(
+    0,
+    84,
+    SCREEN_W,
+    78,
     COLOR_BG
   );
 
-  tft.drawString(
-    temperatureBuffer,
-    centerX,
-    tempY,
-    3
-  );
+  tft.setTextDatum(TL_DATUM);
+
+  tft.setTextFont(2);
 
   tft.setTextColor(
     COLOR_SECONDARY,
@@ -631,190 +465,252 @@ void drawWeather() {
   );
 
   tft.drawString(
-    getWeatherDescription(
-      weather[currentLocation].weatherCode
-    ),
-    centerX,
-    descY,
-    2
+    "METEO ACTUELLE",
+    8,
+    86
   );
 
-  char windBuffer[24];
+  if (!weather[locationIndex].valid) {
 
-  snprintf(
-    windBuffer,
-    sizeof(windBuffer),
-    "WIND %.1f KM/H",
-    weather[currentLocation].windSpeed
+    tft.setTextColor(
+      COLOR_WARNING,
+      COLOR_BG
+    );
+
+    tft.drawString(
+      "DONNEES INDISPONIBLES",
+      8,
+      108
+    );
+
+    return;
+  }
+
+  drawWeatherIcon(
+    25,
+    125,
+    weather[locationIndex].weatherCode
+  );
+
+  tft.setTextFont(4);
+
+  tft.setTextColor(
+    COLOR_TEXT,
+    COLOR_BG
+  );
+
+  String temp =
+    String(
+      weather[locationIndex].temperature,
+      1
+    );
+
+  temp += " C";
+
+  tft.drawString(
+    temp,
+    50,
+    112
+  );
+
+  tft.setTextFont(2);
+
+  tft.setTextColor(
+    COLOR_PRIMARY,
+    COLOR_BG
+  );
+
+  String pressure =
+    "P: " +
+    String(
+      weather[locationIndex].pressure,
+      0
+    ) +
+    " hPa";
+
+  tft.drawString(
+    pressure,
+    155,
+    112
   );
 
   tft.setTextColor(
-    COLOR_GREY,
+    COLOR_TEXT,
     COLOR_BG
   );
 
   tft.drawString(
-    windBuffer,
-    centerX,
-    windY,
-    1
+    getWeatherDescription(
+      weather[locationIndex].weatherCode
+    ),
+    50,
+    137
+  );
+
+  String wind =
+    "Vent " +
+    String(
+      weather[locationIndex].windSpeed,
+      0
+    ) +
+    " km/h";
+
+  tft.drawString(
+    wind,
+    155,
+    137
   );
 
   tft.drawFastHLine(
-    8,
-    SCREEN_H - 8,
-    SCREEN_W - 16,
+    0,
+    160,
+    SCREEN_W,
     COLOR_DARKGREY
   );
 }
 
-// ============================================================
-// COMPLETE LOCATION SCREEN
-// ============================================================
+void drawForecast(
+  uint8_t locationIndex
+) {
 
-void drawLocationScreen() {
-
-  // ----------------------------------------------------------
-  // Pas de fillScreen()
-  // ----------------------------------------------------------
+  if (locationIndex >= LOCATION_COUNT) {
+    return;
+  }
 
   tft.fillRect(
     0,
-    23,
+    162,
     SCREEN_W,
-    SCREEN_H - 23,
+    SCREEN_H - 162,
     COLOR_BG
   );
 
-  drawLocation();
+  tft.setTextDatum(TL_DATUM);
 
-  drawDate();
+  tft.setTextFont(2);
 
-  drawClock();
+  tft.setTextColor(
+    COLOR_SECONDARY,
+    COLOR_BG
+  );
 
-  drawWeather();
+  tft.drawString(
+    "METEO A VENIR",
+    8,
+    164
+  );
 
-  // ----------------------------------------------------------
-  // SAVE CLOCK STATE
-  // ----------------------------------------------------------
+  int y = 187;
 
-  time_t now =
-    time(nullptr);
+  for (uint8_t i = 0;
+       i < FORECAST_COUNT;
+       i++) {
 
-  struct tm* localTime =
-    localtime(&now);
+    ForecastData& f =
+      weather[locationIndex].forecast[i];
 
-  if (
-    localTime
-  ) {
+    if (!f.valid) {
+      continue;
+    }
 
-    lastDisplayedSecond =
-      localTime->tm_sec;
+    tft.setTextColor(
+      COLOR_PRIMARY,
+      COLOR_BG
+    );
 
-    lastDisplayedMinute =
-      localTime->tm_min;
+    tft.drawString(
+      f.time,
+      8,
+      y
+    );
 
-    lastDisplayedHour =
-      localTime->tm_hour;
+    drawWeatherIcon(
+      62,
+      y + 8,
+      f.weatherCode
+    );
+
+    tft.setTextColor(
+      COLOR_TEXT,
+      COLOR_BG
+    );
+
+    String temp =
+      String(
+        f.temperature,
+        1
+      );
+
+    temp += " C";
+
+    tft.drawString(
+      temp,
+      90,
+      y
+    );
+
+    tft.setTextColor(
+      COLOR_GREY,
+      COLOR_BG
+    );
+
+    tft.drawString(
+      getWeatherDescription(
+        f.weatherCode
+      ),
+      155,
+      y
+    );
+
+    y += 20;
   }
+
+  tft.drawFastHLine(
+    0,
+    SCREEN_H - 8,
+    SCREEN_W,
+    COLOR_DARKGREY
+  );
 }
 
-// ============================================================
-// CLOCK UPDATE
-// ============================================================
+void drawLocationScreen(
+  uint8_t locationIndex
+) {
+
+  tft.fillScreen(
+    COLOR_BG
+  );
+
+  drawHeader();
+
+  drawLocation(
+    locationIndex
+  );
+
+  drawDateTime();
+
+  drawWeather(
+    locationIndex
+  );
+
+  drawForecast(
+    locationIndex
+  );
+}
 
 void updateClockDisplay() {
-
-  time_t now =
-    time(nullptr);
-
-  struct tm* localTime =
-    localtime(&now);
-
-  if (
-    !localTime
-  ) {
-    return;
-  }
-
-  int currentSecond =
-    localTime->tm_sec;
-
-  int currentMinute =
-    localTime->tm_min;
-
-  int currentHour =
-    localTime->tm_hour;
-
-  // ----------------------------------------------------------
-  // MINUTE / HEURE
-  // ----------------------------------------------------------
-
-  if (
-    currentMinute != lastDisplayedMinute ||
-    currentHour != lastDisplayedHour
-  ) {
-
-    tft.fillRect(
-      35,
-      68,
-      SCREEN_W - 70,
-      40,
-      COLOR_BG
-    );
-
-    drawDate();
-
-    drawClock();
-
-    lastDisplayedMinute =
-      currentMinute;
-
-    lastDisplayedHour =
-      currentHour;
-
-    lastDisplayedSecond =
-      currentSecond;
-
-    return;
-  }
-
-  // ----------------------------------------------------------
-  // SECONDE
-  // ----------------------------------------------------------
-
-  if (
-    currentSecond != lastDisplayedSecond
-  ) {
-
-    tft.fillRect(
-      35,
-      84,
-      SCREEN_W - 70,
-      25,
-      COLOR_BG
-    );
-
-    drawClock();
-
-    lastDisplayedSecond =
-      currentSecond;
-  }
+  drawDateTime();
 }
 
-// ============================================================
-// WEATHER DISPLAY UPDATE
-// ============================================================
+void updateWeatherDisplay(
+  uint8_t locationIndex
+) {
 
-void updateWeatherDisplay() {
-
-  tft.fillRect(
-    0,
-    110,
-    SCREEN_W,
-    SCREEN_H - 118,
-    COLOR_BG
+  drawWeather(
+    locationIndex
   );
 
-  drawWeather();
+  drawForecast(
+    locationIndex
+  );
 }

@@ -102,7 +102,7 @@ void switchLocation() {
   // Redessine ville + drapeau + date + heure + météo
   // ----------------------------------------------------------
 
-  drawLocationScreen();
+  drawLocationScreen(currentLocation);
 }
 
 // ============================================================
@@ -252,7 +252,7 @@ void setup() {
   // INITIAL DISPLAY
   // ----------------------------------------------------------
 
-  drawLocationScreen();
+  drawLocationScreen(currentLocation);
 
   // ----------------------------------------------------------
   // TIMERS
@@ -330,7 +330,7 @@ void loop() {
       screenReady
     ) {
 
-      updateWeatherDisplay();
+      updateWeatherDisplay(currentLocation);
     }
   }
 

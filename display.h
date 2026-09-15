@@ -4,57 +4,30 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 
-// ============================================================
-// DISPLAY
-// ============================================================
-
 extern TFT_eSPI tft;
 
 extern int SCREEN_W;
 extern int SCREEN_H;
 
-// ============================================================
-// DISPLAY FUNCTIONS
-// ============================================================
-
 void initDisplay();
 
+void drawLocationScreen(uint8_t locationIndex);
+
 void drawHeader();
+void drawLocation(uint8_t locationIndex);
+void drawCurrentFlag(uint8_t locationIndex);
 
-void drawLocation();
+void drawDateTime();
 
-void drawCurrentFlag();
-
-void drawDate();
-
-void drawClock();
-
-void drawWeather();
-
-void drawLocationScreen();
+void drawWeather(uint8_t locationIndex);
+void drawForecast(uint8_t locationIndex);
 
 void updateClockDisplay();
+void updateWeatherDisplay(uint8_t locationIndex);
 
-void updateWeatherDisplay();
+void drawFlagFrance(int x, int y, int w, int h);
+void drawFlagMexico(int x, int y, int w, int h);
 
-void drawFlagFrance(
-  int x,
-  int y,
-  int w,
-  int h
-);
-
-void drawFlagMexico(
-  int x,
-  int y,
-  int w,
-  int h
-);
-
-void drawWeatherIcon(
-  int x,
-  int y,
-  int code
-);
+void drawWeatherIcon(int x, int y, int code);
 
 #endif

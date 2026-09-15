@@ -3,26 +3,15 @@
 
 #include <Arduino.h>
 
-// ============================================================
-// LOCATION
-// ============================================================
-
 struct Location {
-
   const char* name;
   const char* country;
   const char* timezone;
-
   float latitude;
   float longitude;
 };
 
-// ============================================================
-// LOCATIONS
-// ============================================================
-
 const Location locations[] = {
-
   {
     "LILLE",
     "FRANCE",
@@ -30,7 +19,6 @@ const Location locations[] = {
     50.6292,
     3.0573
   },
-
   {
     "VERACRUZ",
     "MEXICO",
@@ -40,6 +28,6 @@ const Location locations[] = {
   }
 };
 
-const uint8_t LOCATION_COUNT = 2;
+const uint8_t LOCATION_COUNT = sizeof(locations) / sizeof(locations[0]);
 
 #endif

@@ -9,414 +9,313 @@
 #include "config.h"
 #include "locations.h"
 
-// ============================================================
-// WEATHER DATA
-// ============================================================
-
 WeatherData weather[LOCATION_COUNT];
 
-// ============================================================
-// WIFI
-// ============================================================
+static void clearWeatherData(uint8_t locationIndex) {
+  weather[locationIndex].temperature = 0.0;
+  weather[locationIndex].feelsLike = 0.0;
+  weather[locationIndex].pressure = 0.0;
+  weather[locationIndex].windSpeed = 0.0;
+  weather[locationIndex].weatherCode = -1;
+  weather[locationIndex].valid = false;
+
+  for (uint8_t i = 0; i < FORECAST_COUNT; i++) {
+    weather[locationIndex].forecast[i].time[0] = '\0';
+    weather[locationIndex].forecast[i].temperature = 0.0;
+    weather[locationIndex].forecast[i].weatherCode = -1;
+    weather[locationIndex].forecast[i].valid = false;
+  }
+}
 
 void connectWiFi() {
-
   Serial.println();
-  Serial.println("========================================");
-  Serial.println("WIFI");
-  Serial.println("========================================");
+  Serial.println("=== WIFI ===");
 
   WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  WiFi.begin(
-    WIFI_SSID,
-    WIFI_PASSWORD
-  );
+  Serial.print("Connexion");
 
   unsigned long start = millis();
 
-  while (
-    WiFi.status() != WL_CONNECTED &&
-    millis() - start < WIFI_TIMEOUT
-  ) {
+  while (WiFi.status() != WL_CONNECTED &&
+         millis() - start < WIFI_TIMEOUT) {
 
-    delay(250);
+    delay(500);
     Serial.print(".");
   }
 
   Serial.println();
 
-  if (
-    WiFi.status() == WL_CONNECTED
-  ) {
-
+  if (WiFi.status() == WL_CONNECTED) {
     Serial.println("WiFi OK");
-
     Serial.print("IP : ");
-    Serial.println(
-      WiFi.localIP()
-    );
-
+    Serial.println(WiFi.localIP());
   } else {
-
-    Serial.println("WiFi ERROR");
+    Serial.println("WiFi ECHEC");
   }
 }
-
-// ============================================================
-// TIMEZONE
-// ============================================================
-
-void setLocationTimezone(
-  uint8_t locationIndex
-) {
-
-  if (
-    locationIndex >= LOCATION_COUNT
-  ) {
-    return;
-  }
-
-  setenv(
-    "TZ",
-    locations[locationIndex].timezone,
-    1
-  );
-
-  tzset();
-
-  Serial.print("TIMEZONE -> ");
-  Serial.println(
-    locations[locationIndex].timezone
-  );
-}
-
-// ============================================================
-// NTP
-// ============================================================
 
 void initTime() {
+  Serial.println("Initialisation NTP...");
 
   configTime(
     0,
     0,
     "pool.ntp.org",
-    "time.nist.gov"
+    "time.nist.gov",
+    "time.google.com"
   );
 
-  Serial.println(
-    "Synchronisation NTP..."
-  );
+  time_t now = time(nullptr);
 
-  time_t now =
-    time(nullptr);
+  unsigned long start = millis();
 
-  unsigned long start =
-    millis();
-
-  while (
-    now < 100000 &&
-    millis() - start < 15000UL
-  ) {
-
+  while (now < 100000 && millis() - start < 15000UL) {
     delay(250);
-
-    now =
-      time(nullptr);
-
-    Serial.print(".");
+    now = time(nullptr);
   }
 
-  Serial.println();
-
-  if (
-    now >= 100000
-  ) {
-
-    Serial.println(
-      "NTP OK"
-    );
-
+  if (now >= 100000) {
+    Serial.println("NTP OK");
   } else {
-
-    Serial.println(
-      "NTP TIMEOUT"
-    );
+    Serial.println("NTP timeout");
   }
 }
 
-// ============================================================
-// WEATHER API
-// ============================================================
+void setLocationTimezone(uint8_t locationIndex) {
+  if (locationIndex >= LOCATION_COUNT) {
+    return;
+  }
 
-bool fetchWeather(
-  uint8_t index
-) {
+  setenv("TZ", locations[locationIndex].timezone, 1);
+  tzset();
 
-  if (
-    WiFi.status() != WL_CONNECTED
-  ) {
+  Serial.print("Timezone : ");
+  Serial.println(locations[locationIndex].timezone);
+}
+
+bool fetchWeather(uint8_t locationIndex) {
+  if (locationIndex >= LOCATION_COUNT) {
     return false;
   }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi non connecte");
+    return false;
+  }
+
+  clearWeatherData(locationIndex);
+
+  const Location& loc = locations[locationIndex];
 
   String url =
     "https://api.open-meteo.com/v1/forecast?"
-    "latitude=" +
-    String(
-      locations[index].latitude,
-      4
-    ) +
-    "&longitude=" +
-    String(
-      locations[index].longitude,
-      4
-    ) +
+    "latitude=" + String(loc.latitude, 4) +
+    "&longitude=" + String(loc.longitude, 4) +
     "&current="
     "temperature_2m,"
     "apparent_temperature,"
+    "pressure_msl,"
     "weather_code,"
     "wind_speed_10m"
-    "&timezone=" +
-    String(
-      locations[index].timezone
-    );
+    "&hourly="
+    "temperature_2m,"
+    "weather_code"
+    "&forecast_days=2"
+    "&timezone=" + String(loc.timezone);
 
   Serial.println();
-  Serial.println(
-    "Weather request:"
-  );
-
+  Serial.println("=== METEO ===");
   Serial.println(url);
 
   WiFiClientSecure client;
-
   client.setInsecure();
 
-  HTTPClient http;
+  HTTPClient https;
 
-  if (
-    !http.begin(
-      client,
-      url
-    )
-  ) {
-
-    Serial.println(
-      "HTTP begin ERROR"
-    );
-
+  if (!https.begin(client, url)) {
+    Serial.println("HTTP begin ECHEC");
     return false;
   }
 
-  int httpCode =
-    http.GET();
+  int httpCode = https.GET();
 
-  if (
-    httpCode != HTTP_CODE_OK
-  ) {
-
-    Serial.print(
-      "HTTP ERROR : "
-    );
-
-    Serial.println(
-      httpCode
-    );
-
-    http.end();
-
+  if (httpCode != HTTP_CODE_OK) {
+    Serial.print("HTTP erreur : ");
+    Serial.println(httpCode);
+    https.end();
     return false;
   }
 
-  String payload =
-    http.getString();
+  String payload = https.getString();
+  https.end();
 
-  http.end();
+  DynamicJsonDocument doc(45000);
 
-  DynamicJsonDocument doc(
-    8192
-  );
-
-  DeserializationError error =
-    deserializeJson(
-      doc,
-      payload
-    );
+  DeserializationError error = deserializeJson(doc, payload);
 
   if (error) {
-
-    Serial.print(
-      "JSON ERROR : "
-    );
-
-    Serial.println(
-      error.c_str()
-    );
-
+    Serial.print("JSON erreur : ");
+    Serial.println(error.c_str());
     return false;
   }
 
-  JsonObject current =
-    doc["current"];
+  JsonObject current = doc["current"];
 
-  if (
-    current.isNull()
-  ) {
-
-    Serial.println(
-      "Current weather unavailable"
-    );
-
+  if (current.isNull()) {
+    Serial.println("Current absent");
     return false;
   }
 
-  weather[index].temperature =
-    current[
-      "temperature_2m"
-    ] | 0.0;
+  weather[locationIndex].temperature =
+    current["temperature_2m"] | 0.0;
 
-  weather[index].feelsLike =
-    current[
-      "apparent_temperature"
-    ] | 0.0;
+  weather[locationIndex].feelsLike =
+    current["apparent_temperature"] | 0.0;
 
-  weather[index].weatherCode =
-    current[
-      "weather_code"
-    ] | 0;
+  weather[locationIndex].pressure =
+    current["pressure_msl"] | 0.0;
 
-  weather[index].windSpeed =
-    current[
-      "wind_speed_10m"
-    ] | 0.0;
+  weather[locationIndex].windSpeed =
+    current["wind_speed_10m"] | 0.0;
 
-  weather[index].valid =
-    true;
+  weather[locationIndex].weatherCode =
+    current["weather_code"] | -1;
 
-  Serial.print(
-    locations[index].name
-  );
+  JsonArray hourlyTime = doc["hourly"]["time"];
+  JsonArray hourlyTemperature = doc["hourly"]["temperature_2m"];
+  JsonArray hourlyCode = doc["hourly"]["weather_code"];
 
-  Serial.print(
-    " : "
-  );
+  time_t now = time(nullptr);
 
-  Serial.print(
-    weather[index].temperature
-  );
+  int found = 0;
 
-  Serial.println(
-    " C"
-  );
+  for (size_t i = 0;
+       i < hourlyTime.size() && found < FORECAST_COUNT;
+       i++) {
+
+    const char* timeString = hourlyTime[i];
+
+    if (!timeString) {
+      continue;
+    }
+
+    struct tm forecastTm = {};
+
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+
+    if (sscanf(
+          timeString,
+          "%d-%d-%dT%d:%d",
+          &year,
+          &month,
+          &day,
+          &hour,
+          &minute
+        ) != 5) {
+      continue;
+    }
+
+    forecastTm.tm_year = year - 1900;
+    forecastTm.tm_mon = month - 1;
+    forecastTm.tm_mday = day;
+    forecastTm.tm_hour = hour;
+    forecastTm.tm_min = minute;
+    forecastTm.tm_sec = 0;
+
+    time_t forecastEpoch = mktime(&forecastTm);
+
+    if (forecastEpoch <= now) {
+      continue;
+    }
+
+    ForecastData& f =
+      weather[locationIndex].forecast[found];
+
+    snprintf(
+      f.time,
+      sizeof(f.time),
+      "%02d:%02d",
+      hour,
+      minute
+    );
+
+    f.temperature =
+      hourlyTemperature[i] | 0.0;
+
+    f.weatherCode =
+      hourlyCode[i] | -1;
+
+    f.valid = true;
+
+    found++;
+  }
+
+  weather[locationIndex].valid = true;
+
+  Serial.println("Meteo OK");
+
+  Serial.print("Temperature : ");
+  Serial.println(weather[locationIndex].temperature);
+
+  Serial.print("Pression : ");
+  Serial.println(weather[locationIndex].pressure);
+
+  Serial.print("Vent : ");
+  Serial.println(weather[locationIndex].windSpeed);
 
   return true;
 }
 
-// ============================================================
-// WEATHER UPDATE
-// ============================================================
-
 void updateWeather() {
-
-  if (
-    WiFi.status() != WL_CONNECTED
-  ) {
-
-    connectWiFi();
-
-    if (
-      WiFi.status() != WL_CONNECTED
-    ) {
-      return;
-    }
-  }
-
-  Serial.println();
-  Serial.println(
-    "========================================"
-  );
-
-  Serial.println(
-    "WEATHER UPDATE"
-  );
-
-  Serial.println(
-    "========================================"
-  );
-
-  for (
-    uint8_t i = 0;
-    i < LOCATION_COUNT;
-    i++
-  ) {
-
+  for (uint8_t i = 0; i < LOCATION_COUNT; i++) {
     fetchWeather(i);
-
     delay(100);
   }
 }
 
-// ============================================================
-// WEATHER DESCRIPTION
-// ============================================================
+const char* getWeatherDescription(int code) {
 
-const char* getWeatherDescription(
-  int code
-) {
+  if (code == 0) {
+    return "CIEL DEGAGE";
+  }
 
-  if (
-    code == 0
-  )
-    return "CLEAR";
+  if (code == 1 || code == 2 || code == 3) {
+    return "NUAGEUX";
+  }
 
-  if (
-    code == 1 ||
-    code == 2 ||
-    code == 3
-  )
-    return "CLOUDY";
+  if (code == 45 || code == 48) {
+    return "BROUILLARD";
+  }
 
-  if (
-    code == 45 ||
-    code == 48
-  )
-    return "FOG";
+  if (code >= 51 && code <= 57) {
+    return "BRUINE";
+  }
 
-  if (
-    code >= 51 &&
-    code <= 57
-  )
-    return "DRIZZLE";
+  if (code >= 61 && code <= 67) {
+    return "PLUIE";
+  }
 
-  if (
-    code >= 61 &&
-    code <= 67
-  )
-    return "RAIN";
+  if (code >= 71 && code <= 77) {
+    return "NEIGE";
+  }
 
-  if (
-    code >= 71 &&
-    code <= 77
-  )
-    return "SNOW";
+  if (code >= 80 && code <= 82) {
+    return "AVERSES";
+  }
 
-  if (
-    code >= 80 &&
-    code <= 82
-  )
-    return "SHOWERS";
+  if (code == 85 || code == 86) {
+    return "AVERSES NEIGE";
+  }
 
-  if (
-    code >= 85 &&
-    code <= 86
-  )
-    return "SNOW SHOWERS";
+  if (code >= 95 && code <= 99) {
+    return "ORAGE";
+  }
 
-  if (
-    code >= 95 &&
-    code <= 99
-  )
-    return "STORM";
-
-  return "UNKNOWN";
+  return "INCONNU";
 }
