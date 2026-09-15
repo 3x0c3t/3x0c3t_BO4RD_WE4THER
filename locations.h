@@ -1,8 +1,6 @@
 #ifndef LOCATIONS_H
 #define LOCATIONS_H
 
-#include <Arduino.h>
-
 struct Location {
   const char* name;
   const char* country;
@@ -19,15 +17,24 @@ const Location locations[] = {
     50.6292,
     3.0573
   },
+
   {
     "VERACRUZ",
-    "MEXICO",
+    "MEXIQUE",
     "America/Mexico_City",
     19.1738,
     -96.1342
+  },
+
+  {
+    "ZONGOLICA",
+    "MEXIQUE",
+    "America/Mexico_City",
+    18.66672,
+    -96.99821
   }
 };
 
-const uint8_t LOCATION_COUNT = sizeof(locations) / sizeof(locations[0]);
+const uint8_t LOCATION_COUNT = 3;
 
 #endif
