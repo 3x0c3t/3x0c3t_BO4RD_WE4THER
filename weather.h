@@ -2,6 +2,7 @@
 #define WEATHER_H
 
 #include <Arduino.h>
+#include <time.h>
 
 #define FORECAST_COUNT 3
 
@@ -29,6 +30,11 @@ extern WeatherData weather[];
 void connectWiFi();
 void initTime();
 void setLocationTimezone(uint8_t locationIndex);
+
+bool getLocationLocalTime(
+  uint8_t locationIndex,
+  struct tm* result
+);
 
 bool fetchWeather(uint8_t locationIndex);
 void updateWeather();

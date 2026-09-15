@@ -14,6 +14,7 @@ TFT_eSPI tft = TFT_eSPI();
 int SCREEN_W = 240;
 int SCREEN_H = 320;
 
+
 // ============================================================
 // UTILITAIRES
 // ============================================================
@@ -32,11 +33,19 @@ void drawBoldString(
   tft.setTextDatum(datum);
   tft.setTextColor(color, background);
 
-  // Première passe
-  tft.drawString(text, x, y);
+  tft.drawString(
+    text,
+    x,
+    y
+  );
 
-  // Deuxième passe décalée d'un pixel pour simuler le gras
-  tft.drawString(text, x + 1, y);
+  // Deuxieme passe legerement decalee
+  // pour simuler un texte gras.
+  tft.drawString(
+    text,
+    x + 1,
+    y
+  );
 }
 
 
@@ -48,14 +57,18 @@ void initDisplay() {
 
   tft.init();
 
-  tft.setRotation(TFT_ROTATION);
+  tft.setRotation(
+    TFT_ROTATION
+  );
 
   SCREEN_W = tft.width();
   SCREEN_H = tft.height();
 
   tft.setTextWrap(false);
 
-  tft.fillScreen(COLOR_BG);
+  tft.fillScreen(
+    COLOR_BG
+  );
 }
 
 
@@ -79,6 +92,7 @@ void drawHeader() {
 
   tft.setTextFont(2);
   tft.setTextSize(1);
+
   tft.setTextColor(
     COLOR_PRIMARY,
     COLOR_BG
@@ -183,7 +197,7 @@ void drawFlagMexico(
     TFT_RED
   );
 
-  // Représentation simplifiée du blason
+  // Representation simplifiee du blason.
   tft.fillCircle(
     x + part + part / 2,
     y + h / 2,
@@ -209,11 +223,12 @@ void drawLocation(
   uint8_t locationIndex
 ) {
 
-  if (locationIndex >= LOCATION_COUNT) {
+  if (
+    locationIndex >= LOCATION_COUNT
+  ) {
     return;
   }
 
-  // Bloc agrandi vers le bas
   const int yTop = 25;
   const int blockHeight = 43;
 
@@ -225,13 +240,14 @@ void drawLocation(
     COLOR_BG
   );
 
-  // Drapeau plus grand
   const int flagX = 8;
   const int flagY = 30;
   const int flagW = 42;
   const int flagH = 28;
 
-  if (locationIndex == 0) {
+  if (
+    locationIndex == 0
+  ) {
 
     drawFlagFrance(
       flagX,
@@ -251,12 +267,14 @@ void drawLocation(
   }
 
   // PAYS
+
   tft.setTextDatum(
     TL_DATUM
   );
 
   tft.setTextFont(2);
   tft.setTextSize(1);
+
   tft.setTextColor(
     COLOR_PRIMARY,
     COLOR_BG
@@ -269,8 +287,10 @@ void drawLocation(
   );
 
   // VILLE
+
   tft.setTextFont(4);
   tft.setTextSize(1);
+
   tft.setTextColor(
     COLOR_TEXT,
     COLOR_BG
@@ -282,7 +302,8 @@ void drawLocation(
     47
   );
 
-  // Ligne basse du bloc
+  // Ligne basse
+
   tft.drawFastHLine(
     4,
     68,
@@ -293,7 +314,7 @@ void drawLocation(
 
 
 // ============================================================
-// COMPATIBILITE ANCIENNE FONCTION
+// ECRAN COMPLET
 // ============================================================
 
 void drawLocationScreen(
@@ -310,7 +331,9 @@ void drawLocationScreen(
     locationIndex
   );
 
-  drawDateTime();
+  drawDateTime(
+    locationIndex
+  );
 
   drawWeather(
     locationIndex
@@ -323,21 +346,21 @@ void drawLocationScreen(
 
 
 // ============================================================
-// DATE + HEURE
+// DATE + HEURE LOCALE
 // ============================================================
 
-void drawDateTime() {
+void drawDateTime(
+  uint8_t locationIndex
+) {
 
-  time_t now = time(nullptr);
+  struct tm timeInfo;
 
-  if (now < 100000) {
-    return;
-  }
-
-  struct tm* timeInfo =
-    localtime(&now);
-
-  if (!timeInfo) {
+  if (
+    !getLocationLocalTime(
+      locationIndex,
+      &timeInfo
+    )
+  ) {
     return;
   }
 
@@ -348,18 +371,18 @@ void drawDateTime() {
     dateBuffer,
     sizeof(dateBuffer),
     "%02d/%02d/%04d",
-    timeInfo->tm_mday,
-    timeInfo->tm_mon + 1,
-    timeInfo->tm_year + 1900
+    timeInfo.tm_mday,
+    timeInfo.tm_mon + 1,
+    timeInfo.tm_year + 1900
   );
 
   snprintf(
     timeBuffer,
     sizeof(timeBuffer),
     "%02d:%02d:%02d",
-    timeInfo->tm_hour,
-    timeInfo->tm_min,
-    timeInfo->tm_sec
+    timeInfo.tm_hour,
+    timeInfo.tm_min,
+    timeInfo.tm_sec
   );
 
   // ==========================================================
@@ -369,7 +392,6 @@ void drawDateTime() {
   const int y = 70;
   const int h = 31;
 
-  // Fond vert
   tft.fillRect(
     4,
     y,
@@ -378,7 +400,6 @@ void drawDateTime() {
     COLOR_SECONDARY
   );
 
-  // Contour
   tft.drawRect(
     4,
     y,
@@ -387,13 +408,17 @@ void drawDateTime() {
     COLOR_SECONDARY
   );
 
-  // Date à gauche
+  // ==========================================================
+  // DATE
+  // ==========================================================
+
   tft.setTextDatum(
     ML_DATUM
   );
 
   tft.setTextFont(2);
   tft.setTextSize(1);
+
   tft.setTextColor(
     TFT_BLACK,
     COLOR_SECONDARY
@@ -406,7 +431,7 @@ void drawDateTime() {
   );
 
   // ==========================================================
-  // HEURE GRANDE + GRAS
+  // HEURE
   // ==========================================================
 
   drawBoldString(
@@ -422,7 +447,7 @@ void drawDateTime() {
 
 
 // ============================================================
-// ICÔNES METEO
+// ICONE METEO
 // ============================================================
 
 void drawWeatherIcon(
@@ -431,8 +456,11 @@ void drawWeatherIcon(
   int code
 ) {
 
-  // Ciel dégagé
-  if (code == 0) {
+  // CIEL DEGAGE
+
+  if (
+    code == 0
+  ) {
 
     tft.fillCircle(
       x,
@@ -441,22 +469,26 @@ void drawWeatherIcon(
       TFT_YELLOW
     );
 
-    for (int i = 0; i < 8; i++) {
+    for (
+      int i = 0;
+      i < 8;
+      i++
+    ) {
 
-      float a =
+      float angle =
         i * PI / 4.0;
 
       int x1 =
-        x + cos(a) * 11;
+        x + cos(angle) * 11;
 
       int y1 =
-        y + sin(a) * 11;
+        y + sin(angle) * 11;
 
       int x2 =
-        x + cos(a) * 14;
+        x + cos(angle) * 14;
 
       int y2 =
-        y + sin(a) * 14;
+        y + sin(angle) * 14;
 
       tft.drawLine(
         x1,
@@ -470,7 +502,9 @@ void drawWeatherIcon(
     return;
   }
 
-  // Nuages
+
+  // NUAGEUX
+
   if (
     code >= 1 &&
     code <= 3
@@ -508,13 +542,19 @@ void drawWeatherIcon(
     return;
   }
 
-  // Brouillard
+
+  // BROUILLARD
+
   if (
     code == 45 ||
     code == 48
   ) {
 
-    for (int i = -5; i <= 5; i += 5) {
+    for (
+      int i = -5;
+      i <= 5;
+      i += 5
+    ) {
 
       tft.drawFastHLine(
         x - 12,
@@ -527,7 +567,9 @@ void drawWeatherIcon(
     return;
   }
 
-  // Pluie / bruine / averses
+
+  // PLUIE / BRUINE / AVERSes
+
   if (
     (code >= 51 && code <= 67) ||
     (code >= 80 && code <= 82)
@@ -555,7 +597,11 @@ void drawWeatherIcon(
       COLOR_GREY
     );
 
-    for (int i = 0; i < 3; i++) {
+    for (
+      int i = 0;
+      i < 3;
+      i++
+    ) {
 
       int rx =
         x - 7 + i * 7;
@@ -572,7 +618,9 @@ void drawWeatherIcon(
     return;
   }
 
-  // Neige
+
+  // NEIGE
+
   if (
     (code >= 71 && code <= 77) ||
     code == 85 ||
@@ -601,7 +649,11 @@ void drawWeatherIcon(
       COLOR_GREY
     );
 
-    for (int i = 0; i < 3; i++) {
+    for (
+      int i = 0;
+      i < 3;
+      i++
+    ) {
 
       int sx =
         x - 7 + i * 7;
@@ -617,7 +669,9 @@ void drawWeatherIcon(
     return;
   }
 
-  // Orage
+
+  // ORAGE
+
   if (
     code >= 95 &&
     code <= 99
@@ -668,7 +722,9 @@ void drawWeatherIcon(
     return;
   }
 
-  // Icône inconnue
+
+  // INCONNU
+
   tft.drawCircle(
     x,
     y,
@@ -686,7 +742,9 @@ void drawWeather(
   uint8_t locationIndex
 ) {
 
-  if (locationIndex >= LOCATION_COUNT) {
+  if (
+    locationIndex >= LOCATION_COUNT
+  ) {
     return;
   }
 
@@ -707,6 +765,7 @@ void drawWeather(
 
   tft.setTextFont(2);
   tft.setTextSize(1);
+
   tft.setTextColor(
     COLOR_PRIMARY,
     COLOR_BG
@@ -718,7 +777,9 @@ void drawWeather(
     yTop + 1
   );
 
-  if (!weather[locationIndex].valid) {
+  if (
+    !weather[locationIndex].valid
+  ) {
 
     tft.setTextColor(
       COLOR_ERROR,
@@ -734,7 +795,8 @@ void drawWeather(
     return;
   }
 
-  // Température
+  // Temperature
+
   char tempBuffer[16];
 
   snprintf(
@@ -745,6 +807,7 @@ void drawWeather(
   );
 
   tft.setTextFont(4);
+
   tft.setTextColor(
     COLOR_TEXT,
     COLOR_BG
@@ -756,7 +819,8 @@ void drawWeather(
     yTop + 20
   );
 
-  // Icône
+  // Icone
+
   drawWeatherIcon(
     112,
     yTop + 32,
@@ -764,7 +828,9 @@ void drawWeather(
   );
 
   // Conditions
+
   tft.setTextFont(1);
+
   tft.setTextColor(
     COLOR_TEXT,
     COLOR_BG
@@ -779,6 +845,7 @@ void drawWeather(
   );
 
   // Pression
+
   char pressureBuffer[24];
 
   snprintf(
@@ -795,6 +862,7 @@ void drawWeather(
   );
 
   // Vent
+
   char windBuffer[24];
 
   snprintf(
@@ -820,7 +888,9 @@ void drawForecast(
   uint8_t locationIndex
 ) {
 
-  if (locationIndex >= LOCATION_COUNT) {
+  if (
+    locationIndex >= LOCATION_COUNT
+  ) {
     return;
   }
 
@@ -840,6 +910,7 @@ void drawForecast(
 
   tft.setTextFont(2);
   tft.setTextSize(1);
+
   tft.setTextColor(
     COLOR_PRIMARY,
     COLOR_BG
@@ -851,7 +922,9 @@ void drawForecast(
     yTop + 1
   );
 
-  if (!weather[locationIndex].valid) {
+  if (
+    !weather[locationIndex].valid
+  ) {
     return;
   }
 
@@ -865,13 +938,17 @@ void drawForecast(
       yTop + 20 + i * 25;
 
     ForecastData& forecast =
-      weather[locationIndex].forecast[i];
+      weather[locationIndex]
+        .forecast[i];
 
-    if (!forecast.valid) {
+    if (
+      !forecast.valid
+    ) {
       continue;
     }
 
-    // Séparateur
+    // Separateur
+
     tft.drawFastHLine(
       6,
       y - 3,
@@ -880,7 +957,9 @@ void drawForecast(
     );
 
     // Heure
+
     tft.setTextFont(2);
+
     tft.setTextColor(
       COLOR_TEXT,
       COLOR_BG
@@ -892,14 +971,16 @@ void drawForecast(
       y
     );
 
-    // Icône
+    // Icone
+
     drawWeatherIcon(
       62,
       y + 6,
       forecast.weatherCode
     );
 
-    // Température
+    // Temperature
+
     char tempBuffer[12];
 
     snprintf(
@@ -918,6 +999,7 @@ void drawForecast(
     );
 
     // Description
+
     tft.setTextFont(1);
 
     tft.drawString(
@@ -932,17 +1014,21 @@ void drawForecast(
 
 
 // ============================================================
-// DATE / HEURE : RAFRAICHISSEMENT
+// RAFRAICHISSEMENT HORLOGE
 // ============================================================
 
-void updateClockDisplay() {
+void updateClockDisplay(
+  uint8_t locationIndex
+) {
 
-  drawDateTime();
+  drawDateTime(
+    locationIndex
+  );
 }
 
 
 // ============================================================
-// METEO : RAFRAICHISSEMENT
+// RAFRAICHISSEMENT METEO
 // ============================================================
 
 void updateWeatherDisplay(
@@ -960,18 +1046,22 @@ void updateWeatherDisplay(
 
 
 // ============================================================
-// FONCTION COMPATIBLE AVEC LE HEADER
+// DRAPEAU COURANT
 // ============================================================
 
 void drawCurrentFlag(
   uint8_t locationIndex
 ) {
 
-  if (locationIndex >= LOCATION_COUNT) {
+  if (
+    locationIndex >= LOCATION_COUNT
+  ) {
     return;
   }
 
-  if (locationIndex == 0) {
+  if (
+    locationIndex == 0
+  ) {
 
     drawFlagFrance(
       8,

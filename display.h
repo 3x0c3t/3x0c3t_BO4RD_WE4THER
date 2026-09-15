@@ -17,12 +17,12 @@ void drawHeader();
 void drawLocation(uint8_t locationIndex);
 void drawCurrentFlag(uint8_t locationIndex);
 
-void drawDateTime();
+void drawDateTime(uint8_t locationIndex);
 
 void drawWeather(uint8_t locationIndex);
 void drawForecast(uint8_t locationIndex);
 
-void updateClockDisplay();
+void updateClockDisplay(uint8_t locationIndex);
 void updateWeatherDisplay(uint8_t locationIndex);
 
 void drawFlagFrance(int x, int y, int w, int h);

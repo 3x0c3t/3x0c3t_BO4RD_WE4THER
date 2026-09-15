@@ -309,7 +309,7 @@ void loop() {
     lastClockUpdate =
       now;
 
-    updateClockDisplay();
+    updateClockDisplay(currentLocation);
   }
 
   // ----------------------------------------------------------
