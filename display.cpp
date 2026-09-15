@@ -14,7 +14,6 @@ TFT_eSPI tft = TFT_eSPI();
 int SCREEN_W = 240;
 int SCREEN_H = 320;
 
-
 // ============================================================
 // UTILITAIRES
 // ============================================================
@@ -31,7 +30,11 @@ void drawBoldString(
   tft.setTextFont(font);
   tft.setTextSize(1);
   tft.setTextDatum(datum);
-  tft.setTextColor(color, background);
+
+  tft.setTextColor(
+    color,
+    background
+  );
 
   tft.drawString(
     text,
@@ -39,8 +42,6 @@ void drawBoldString(
     y
   );
 
-  // Deuxieme passe legerement decalee
-  // pour simuler un texte gras.
   tft.drawString(
     text,
     x + 1,
@@ -48,13 +49,12 @@ void drawBoldString(
   );
 }
 
-
 // ============================================================
 // INITIALISATION
 // ============================================================
 
-void initDisplay() {
-
+void initDisplay()
+{
   tft.init();
 
   tft.setRotation(
@@ -71,13 +71,12 @@ void initDisplay() {
   );
 }
 
-
 // ============================================================
 // HEADER
 // ============================================================
 
-void drawHeader() {
-
+void drawHeader()
+{
   tft.fillRect(
     0,
     0,
@@ -112,7 +111,6 @@ void drawHeader() {
   );
 }
 
-
 // ============================================================
 // DRAPEAU FRANCE
 // ============================================================
@@ -122,8 +120,8 @@ void drawFlagFrance(
   int y,
   int w,
   int h
-) {
-
+)
+{
   int part = w / 3;
 
   tft.fillRect(
@@ -159,7 +157,6 @@ void drawFlagFrance(
   );
 }
 
-
 // ============================================================
 // DRAPEAU MEXIQUE
 // ============================================================
@@ -169,8 +166,8 @@ void drawFlagMexico(
   int y,
   int w,
   int h
-) {
-
+)
+{
   int part = w / 3;
 
   tft.fillRect(
@@ -197,7 +194,6 @@ void drawFlagMexico(
     TFT_RED
   );
 
-  // Representation simplifiee du blason.
   tft.fillCircle(
     x + part + part / 2,
     y + h / 2,
@@ -214,15 +210,14 @@ void drawFlagMexico(
   );
 }
 
-
 // ============================================================
 // PAYS / VILLE
 // ============================================================
 
 void drawLocation(
   uint8_t locationIndex
-) {
-
+)
+{
   if (
     locationIndex >= LOCATION_COUNT
   ) {
@@ -248,16 +243,13 @@ void drawLocation(
   if (
     locationIndex == 0
   ) {
-
     drawFlagFrance(
       flagX,
       flagY,
       flagW,
       flagH
     );
-
   } else {
-
     drawFlagMexico(
       flagX,
       flagY,
@@ -265,8 +257,6 @@ void drawLocation(
       flagH
     );
   }
-
-  // PAYS
 
   tft.setTextDatum(
     TL_DATUM
@@ -286,10 +276,7 @@ void drawLocation(
     29
   );
 
-  // VILLE
-
   tft.setTextFont(4);
-  tft.setTextSize(1);
 
   tft.setTextColor(
     COLOR_TEXT,
@@ -302,8 +289,6 @@ void drawLocation(
     47
   );
 
-  // Ligne basse
-
   tft.drawFastHLine(
     4,
     68,
@@ -312,15 +297,14 @@ void drawLocation(
   );
 }
 
-
 // ============================================================
 // ECRAN COMPLET
 // ============================================================
 
 void drawLocationScreen(
   uint8_t locationIndex
-) {
-
+)
+{
   tft.fillScreen(
     COLOR_BG
   );
@@ -344,15 +328,14 @@ void drawLocationScreen(
   );
 }
 
-
 // ============================================================
-// DATE + HEURE LOCALE
+// DATE + HEURE
 // ============================================================
 
 void drawDateTime(
   uint8_t locationIndex
-) {
-
+)
+{
   struct tm timeInfo;
 
   if (
@@ -385,10 +368,6 @@ void drawDateTime(
     timeInfo.tm_sec
   );
 
-  // ==========================================================
-  // BLOC HORLOGE
-  // ==========================================================
-
   const int y = 70;
   const int h = 31;
 
@@ -408,16 +387,11 @@ void drawDateTime(
     COLOR_SECONDARY
   );
 
-  // ==========================================================
-  // DATE
-  // ==========================================================
-
   tft.setTextDatum(
     ML_DATUM
   );
 
   tft.setTextFont(2);
-  tft.setTextSize(1);
 
   tft.setTextColor(
     TFT_BLACK,
@@ -430,10 +404,6 @@ void drawDateTime(
     y + h / 2
   );
 
-  // ==========================================================
-  // HEURE
-  // ==========================================================
-
   drawBoldString(
     String(timeBuffer),
     SCREEN_W - 12,
@@ -445,7 +415,6 @@ void drawDateTime(
   );
 }
 
-
 // ============================================================
 // ICONE METEO
 // ============================================================
@@ -454,13 +423,9 @@ void drawWeatherIcon(
   int x,
   int y,
   int code
-) {
-
-  // CIEL DEGAGE
-
-  if (
-    code == 0
-  ) {
+)
+{
+  if (code == 0) {
 
     tft.fillCircle(
       x,
@@ -474,7 +439,6 @@ void drawWeatherIcon(
       i < 8;
       i++
     ) {
-
       float angle =
         i * PI / 4.0;
 
@@ -501,9 +465,6 @@ void drawWeatherIcon(
 
     return;
   }
-
-
-  // NUAGEUX
 
   if (
     code >= 1 &&
@@ -542,9 +503,6 @@ void drawWeatherIcon(
     return;
   }
 
-
-  // BROUILLARD
-
   if (
     code == 45 ||
     code == 48
@@ -555,7 +513,6 @@ void drawWeatherIcon(
       i <= 5;
       i += 5
     ) {
-
       tft.drawFastHLine(
         x - 12,
         y + i,
@@ -566,9 +523,6 @@ void drawWeatherIcon(
 
     return;
   }
-
-
-  // PLUIE / BRUINE / AVERSes
 
   if (
     (code >= 51 && code <= 67) ||
@@ -602,7 +556,6 @@ void drawWeatherIcon(
       i < 3;
       i++
     ) {
-
       int rx =
         x - 7 + i * 7;
 
@@ -617,9 +570,6 @@ void drawWeatherIcon(
 
     return;
   }
-
-
-  // NEIGE
 
   if (
     (code >= 71 && code <= 77) ||
@@ -654,7 +604,6 @@ void drawWeatherIcon(
       i < 3;
       i++
     ) {
-
       int sx =
         x - 7 + i * 7;
 
@@ -668,9 +617,6 @@ void drawWeatherIcon(
 
     return;
   }
-
-
-  // ORAGE
 
   if (
     code >= 95 &&
@@ -722,9 +668,6 @@ void drawWeatherIcon(
     return;
   }
 
-
-  // INCONNU
-
   tft.drawCircle(
     x,
     y,
@@ -733,15 +676,14 @@ void drawWeatherIcon(
   );
 }
 
-
 // ============================================================
 // METEO ACTUELLE
 // ============================================================
 
 void drawWeather(
   uint8_t locationIndex
-) {
-
+)
+{
   if (
     locationIndex >= LOCATION_COUNT
   ) {
@@ -780,7 +722,6 @@ void drawWeather(
   if (
     !weather[locationIndex].valid
   ) {
-
     tft.setTextColor(
       COLOR_ERROR,
       COLOR_BG
@@ -794,8 +735,6 @@ void drawWeather(
 
     return;
   }
-
-  // Temperature
 
   char tempBuffer[16];
 
@@ -819,22 +758,13 @@ void drawWeather(
     yTop + 20
   );
 
-  // Icone
-
   drawWeatherIcon(
     112,
     yTop + 32,
     weather[locationIndex].weatherCode
   );
 
-  // Conditions
-
   tft.setTextFont(1);
-
-  tft.setTextColor(
-    COLOR_TEXT,
-    COLOR_BG
-  );
 
   tft.drawString(
     getWeatherDescription(
@@ -843,8 +773,6 @@ void drawWeather(
     135,
     yTop + 20
   );
-
-  // Pression
 
   char pressureBuffer[24];
 
@@ -858,10 +786,23 @@ void drawWeather(
   tft.drawString(
     pressureBuffer,
     135,
-    yTop + 34
+    yTop + 33
   );
 
-  // Vent
+  char humidityBuffer[24];
+
+  snprintf(
+    humidityBuffer,
+    sizeof(humidityBuffer),
+    "HUM %d%%",
+    weather[locationIndex].humidity
+  );
+
+  tft.drawString(
+    humidityBuffer,
+    6,
+    yTop + 43
+  );
 
   char windBuffer[24];
 
@@ -874,11 +815,10 @@ void drawWeather(
 
   tft.drawString(
     windBuffer,
-    6,
+    135,
     yTop + 43
   );
 }
-
 
 // ============================================================
 // PREVISIONS
@@ -886,8 +826,8 @@ void drawWeather(
 
 void drawForecast(
   uint8_t locationIndex
-) {
-
+)
+{
   if (
     locationIndex >= LOCATION_COUNT
   ) {
@@ -938,16 +878,13 @@ void drawForecast(
       yTop + 20 + i * 25;
 
     ForecastData& forecast =
-      weather[locationIndex]
-        .forecast[i];
+      weather[locationIndex].forecast[i];
 
     if (
       !forecast.valid
     ) {
       continue;
     }
-
-    // Separateur
 
     tft.drawFastHLine(
       6,
@@ -956,8 +893,6 @@ void drawForecast(
       COLOR_DARKGREY
     );
 
-    // Heure
-
     tft.setTextFont(2);
 
     tft.setTextColor(
@@ -965,21 +900,36 @@ void drawForecast(
       COLOR_BG
     );
 
-    tft.drawString(
-      forecast.time,
-      7,
-      y
-    );
+    if (i == 3) {
 
-    // Icone
+      tft.drawString(
+        "+24",
+        7,
+        y
+      );
+
+    } else if (i == 4) {
+
+      tft.drawString(
+        "+48",
+        7,
+        y
+      );
+
+    } else {
+
+      tft.drawString(
+        forecast.time,
+        7,
+        y
+      );
+    }
 
     drawWeatherIcon(
-      62,
+      50,
       y + 6,
       forecast.weatherCode
     );
-
-    // Temperature
 
     char tempBuffer[12];
 
@@ -994,11 +944,24 @@ void drawForecast(
 
     tft.drawString(
       tempBuffer,
-      90,
+      78,
       y
     );
 
-    // Description
+    char humidityBuffer[10];
+
+    snprintf(
+      humidityBuffer,
+      sizeof(humidityBuffer),
+      "%d%%",
+      forecast.humidity
+    );
+
+    tft.drawString(
+      humidityBuffer,
+      138,
+      y
+    );
 
     tft.setTextFont(1);
 
@@ -1006,12 +969,11 @@ void drawForecast(
       getWeatherDescription(
         forecast.weatherCode
       ),
-      150,
+      165,
       y + 2
     );
   }
 }
-
 
 // ============================================================
 // RAFRAICHISSEMENT HORLOGE
@@ -1019,13 +981,12 @@ void drawForecast(
 
 void updateClockDisplay(
   uint8_t locationIndex
-) {
-
+)
+{
   drawDateTime(
     locationIndex
   );
 }
-
 
 // ============================================================
 // RAFRAICHISSEMENT METEO
@@ -1033,8 +994,8 @@ void updateClockDisplay(
 
 void updateWeatherDisplay(
   uint8_t locationIndex
-) {
-
+)
+{
   drawWeather(
     locationIndex
   );
@@ -1044,15 +1005,14 @@ void updateWeatherDisplay(
   );
 }
 
-
 // ============================================================
 // DRAPEAU COURANT
 // ============================================================
 
 void drawCurrentFlag(
   uint8_t locationIndex
-) {
-
+)
+{
   if (
     locationIndex >= LOCATION_COUNT
   ) {
@@ -1062,16 +1022,13 @@ void drawCurrentFlag(
   if (
     locationIndex == 0
   ) {
-
     drawFlagFrance(
       8,
       30,
       42,
       28
     );
-
   } else {
-
     drawFlagMexico(
       8,
       30,
