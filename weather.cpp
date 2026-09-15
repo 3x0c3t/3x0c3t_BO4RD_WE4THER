@@ -17,24 +17,24 @@ WeatherData weather[LOCATION_COUNT];
 // INITIALISATION DES DONNEES
 // ============================================================
 
-void clearWeatherData() {
+void clearWeatherData(uint8_t locationIndex) {
 
-  for (uint8_t i = 0; i < LOCATION_COUNT; i++) {
+  if (locationIndex >= LOCATION_COUNT) {
+    return;
+  }
 
-    weather[i].temperature = 0.0;
-    weather[i].feelsLike = 0.0;
-    weather[i].pressure = 0.0;
-    weather[i].windSpeed = 0.0;
-    weather[i].weatherCode = -1;
-    weather[i].valid = false;
+  weather[locationIndex].temperature = 0.0;
+  weather[locationIndex].feelsLike = 0.0;
+  weather[locationIndex].pressure = 0.0;
+  weather[locationIndex].windSpeed = 0.0;
+  weather[locationIndex].weatherCode = -1;
+  weather[locationIndex].valid = false;
 
-    for (uint8_t j = 0; j < FORECAST_COUNT; j++) {
-
-      weather[i].forecast[j].time[0] = '\0';
-      weather[i].forecast[j].temperature = 0.0;
-      weather[i].forecast[j].weatherCode = -1;
-      weather[i].forecast[j].valid = false;
-    }
+  for (uint8_t j = 0; j < FORECAST_COUNT; j++) {
+    weather[locationIndex].forecast[j].time[0] = '\0';
+    weather[locationIndex].forecast[j].temperature = 0.0;
+    weather[locationIndex].forecast[j].weatherCode = -1;
+    weather[locationIndex].forecast[j].valid = false;
   }
 }
 
@@ -248,7 +248,7 @@ bool fetchWeather(
     return false;
   }
 
-  clearWeatherData();
+  clearWeatherData(locationIndex);
 
   WiFiClientSecure client;
 
