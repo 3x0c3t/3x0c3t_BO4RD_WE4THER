@@ -65,13 +65,13 @@ Fuseau horaire :
 
 `America/Mexico_City`
 
-### Zongolica
+### XXX
 
 Mexique
 
-Latitude : `18.66672`
+Latitude : `XXX`
 
-Longitude : `-96.99821`
+Longitude : `XXX`
 
 Fuseau horaire :
 
@@ -106,6 +106,6 @@ LILLE
   ↓
 VERACRUZ
   ↓
-ZONGOLICA
+XXX
   ↓
 LILLE

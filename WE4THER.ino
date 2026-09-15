@@ -176,12 +176,15 @@ int getLocationUTCOffset(
   if (locationIndex == 0) {
 
     // Lille
-    // Septembre : UTC + 2
+    // Heure d'été : UTC + 2
 
     return 2 * 3600;
   }
 
-  if (locationIndex == 1) {
+  if (
+    locationIndex == 1 ||
+    locationIndex == 2
+  ) {
 
     // Veracruz
     // UTC - 6

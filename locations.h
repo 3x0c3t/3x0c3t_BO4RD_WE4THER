@@ -27,11 +27,11 @@ const Location locations[] = {
   },
 
   {
-    "ZONGOLICA",
-    "MEXIQUE",
-    "America/Mexico_City",
-    18.66672,
-    -96.99821
+    "XXX",
+    "XXX",
+    "UTC",
+    0.0,
+    0.0
   }
 };
 
