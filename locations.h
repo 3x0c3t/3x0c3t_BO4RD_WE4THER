@@ -20,28 +20,28 @@ const Location locations[] = {
     0
   },
   {
-    "MEXICO",
-    "MEXIQUE",
-    "America/Mexico_City",
-    19.4326,
-    -99.1332,
-    1
-  },
-  {
-    "CORDOBA MX",
-    "MEXIQUE",
-    "America/Mexico_City",
-    18.8843,
-    -96.9475,
-    1
-  },
-  {
-    "TERRE ADELI",
-    "ANTARCTIQUE",
-    "Antarctica/DumontDUrville",
-    -66.6633,
-    140.0010,
+    "CHARLEVILLE MEZIERES",
+    "FRANCE",
+    "Europe/Paris",
+    49.7621,
+    4.7202,
     0
+  },
+  {
+    "ANGLET",
+    "FRANCE",
+    "Europe/Paris",
+    43.4833,
+    -1.5167,
+    0
+  },
+  {
+    "KINGSTOWN",
+    "JAMAIQUE",
+    "America/St_Vincent",
+    13.1600,
+    -61.2248,
+    2
   },
   {
     "VATICAN",
@@ -50,9 +50,25 @@ const Location locations[] = {
     41.9029,
     12.4534,
     5
+  },
+  {
+    "MEXICO",
+    "MEXIQUE",
+    "America/Mexico_City",
+    19.4326,
+    -99.1332,
+    1
+  },
+  {
+    "ROSWELL",
+    "USA",
+    "America/Denver",
+    33.3943,
+    -104.5230,
+    3
   }
 };
 
-const uint8_t LOCATION_COUNT = 5;
+const uint8_t LOCATION_COUNT = 7;
 
 #endif
