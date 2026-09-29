@@ -1019,21 +1019,273 @@ void drawCurrentFlag(
     return;
   }
 
-  if (
-    locationIndex == 0
-  ) {
-    drawFlagFrance(
-      8,
-      30,
-      42,
-      28
+  const int flagX = 8;
+  const int flagY = 30;
+  const int flagW = 42;
+  const int flagH = 28;
+
+  switch (locations[locationIndex].flagId) {
+
+    case 0:
+      drawFlagFrance(
+        flagX,
+        flagY,
+        flagW,
+        flagH
+      );
+      break;
+
+    case 1:
+      drawFlagMexico(
+        flagX,
+        flagY,
+        flagW,
+        flagH
+      );
+      break;
+
+    case 2:
+      drawFlagJamaica(
+        flagX,
+        flagY,
+        flagW,
+        flagH
+      );
+      break;
+
+    case 3:
+      drawFlagUSA(
+        flagX,
+        flagY,
+        flagW,
+        flagH
+      );
+      break;
+
+    case 4:
+      drawFlagNepal(
+        flagX,
+        flagY,
+        flagW,
+        flagH
+      );
+      break;
+
+    default:
+      break;
+  }
+}
+    // ============================================================
+// DRAPEAU JAMAIQUE
+// ============================================================
+
+void drawFlagJamaica(
+  int x,
+  int y,
+  int w,
+  int h
+)
+{
+  tft.fillRect(
+    x,
+    y,
+    w,
+    h,
+    TFT_GREEN
+  );
+
+  tft.fillTriangle(
+    x,
+    y,
+    x + w / 2,
+    y + h / 2,
+    x,
+    y + h,
+    TFT_BLACK
+  );
+
+  tft.fillTriangle(
+    x + w,
+    y,
+    x + w / 2,
+    y + h / 2,
+    x + w,
+    y + h,
+    TFT_BLACK
+  );
+
+  tft.fillTriangle(
+    x,
+    y,
+    x + w,
+    y,
+    x + w / 2,
+    y + h / 2,
+    TFT_YELLOW
+  );
+
+  tft.fillTriangle(
+    x,
+    y + h,
+    x + w,
+    y + h,
+    x + w / 2,
+    y + h / 2,
+    TFT_YELLOW
+  );
+
+  tft.drawRect(
+    x,
+    y,
+    w,
+    h,
+    COLOR_TEXT
+  );
+}
+
+// ============================================================
+// DRAPEAU USA
+// ============================================================
+
+void drawFlagUSA(
+  int x,
+  int y,
+  int w,
+  int h
+)
+{
+  int stripeH = h / 7;
+
+  for (int i = 0; i < 7; i++) {
+    tft.fillRect(
+      x,
+      y + i * stripeH,
+      w,
+      (i == 6) ? h - i * stripeH : stripeH,
+      (i % 2 == 0) ? TFT_RED : TFT_WHITE
     );
-  } else {
-    drawFlagMexico(
-      8,
-      30,
-      42,
-      28
-    );
+  }
+
+  int cantonW = w * 2 / 5;
+  int cantonH = h * 4 / 7;
+
+  tft.fillRect(
+    x,
+    y,
+    cantonW,
+    cantonH,
+    TFT_BLUE
+  );
+
+  int starR = 1;
+
+  for (int row = 0; row < 5; row++) {
+    int stars = (row % 2 == 0) ? 4 : 3;
+
+    for (int col = 0; col < stars; col++) {
+      int sx = x + 4 + col * 6 + ((row % 2) ? 3 : 0);
+      int sy = y + 4 + row * 4;
+
+      tft.fillCircle(
+        sx,
+        sy,
+        starR,
+        TFT_WHITE
+      );
+    }
+  }
+
+  tft.drawRect(
+    x,
+    y,
+    w,
+    h,
+    COLOR_TEXT
+  );
+}
+
+// ============================================================
+// DRAPEAU NEPAL
+// ============================================================
+
+void drawFlagNepal(
+  int x,
+  int y,
+  int w,
+  int h
+)
+{
+  int midY = y + h / 2;
+
+  tft.fillTriangle(
+    x,
+    y,
+    x + w * 3 / 4,
+    midY,
+    x,
+    midY,
+    TFT_RED
+  );
+
+  tft.fillTriangle(
+    x,
+    midY,
+    x + w * 3 / 4,
+    y + h,
+    x,
+    y + h,
+    TFT_RED
+  );
+
+  tft.drawTriangle(
+    x,
+    y,
+    x + w * 3 / 4,
+    midY,
+    x,
+    midY,
+    TFT_BLUE
+  );
+
+  tft.drawTriangle(
+    x,
+    midY,
+    x + w * 3 / 4,
+    y + h,
+    x,
+    y + h,
+    TFT_BLUE
+  );
+
+  tft.drawLine(
+    x,
+    y,
+    x,
+    y + h,
+    TFT_BLUE
+  );
+
+  tft.fillCircle(
+    x + w / 4,
+    y + h * 0.32,
+    3,
+    TFT_WHITE
+  );
+
+  tft.fillCircle(
+    x + w / 4,
+    y + h * 0.72,
+    3,
+    TFT_WHITE
+  );
+
+  tft.drawRect(
+    x,
+    y,
+    w,
+    h,
+    COLOR_TEXT
+  );
+}
   }
 }

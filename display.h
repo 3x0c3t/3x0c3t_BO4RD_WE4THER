@@ -28,6 +28,10 @@ void updateWeatherDisplay(uint8_t locationIndex);
 void drawFlagFrance(int x, int y, int w, int h);
 void drawFlagMexico(int x, int y, int w, int h);
 
+void drawFlagJamaica(int x, int y, int w, int h);
+void drawFlagUSA(int x, int y, int w, int h);
+void drawFlagNepal(int x, int y, int w, int h);
+
 void drawWeatherIcon(int x, int y, int code);
 
 #endif
