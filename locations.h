@@ -1,5 +1,6 @@
 #ifndef LOCATIONS_H
 #define LOCATIONS_H
+
 struct Location {
   const char* name;
   const char* country;
@@ -8,6 +9,7 @@ struct Location {
   float longitude;
   uint8_t flagId;
 };
+
 const Location locations[] = {
   {
     "HELLEMMES",
@@ -18,37 +20,39 @@ const Location locations[] = {
     0
   },
   {
-    "ZONGOLICA",
+    "MEXICO",
     "MEXIQUE",
     "America/Mexico_City",
-    18.66672,
-    -96.99821,
+    19.4326,
+    -99.1332,
     1
   },
   {
-    "KINGSTON",
-    "JAMAIQUE",
-    "America/Jamaica",
-    18.0000,
-    -76.7833,
-    2
+    "CORDOBA MX",
+    "MEXIQUE",
+    "America/Mexico_City",
+    18.8843,
+    -96.9475,
+    1
   },
   {
-    "HOUSTON",
-    "TEXAS",
-    "America/Chicago",
-    29.762778,
-    -95.383056,
-    3
+    "TERRE ADELI",
+    "ANTARCTIQUE",
+    "Antarctica/DumontDUrville",
+    -66.6633,
+    140.0010,
+    0
   },
   {
-    "KATMANDOU",
-    "NEPAL",
-    "Asia/Kathmandu",
-    27.7172,
-    85.3240,
-    4
+    "VATICAN",
+    "VATICAN",
+    "Europe/Rome",
+    41.9029,
+    12.4534,
+    5
   }
 };
+
 const uint8_t LOCATION_COUNT = 5;
+
 #endif
