@@ -1287,5 +1287,3 @@ void drawFlagNepal(
     COLOR_TEXT
   );
 }
-  }
-}
