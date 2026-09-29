@@ -235,28 +235,9 @@ void drawLocation(
     COLOR_BG
   );
 
-  const int flagX = 8;
-  const int flagY = 30;
-  const int flagW = 42;
-  const int flagH = 28;
-
-  if (
-    locationIndex == 0
-  ) {
-    drawFlagFrance(
-      flagX,
-      flagY,
-      flagW,
-      flagH
-    );
-  } else {
-    drawFlagMexico(
-      flagX,
-      flagY,
-      flagW,
-      flagH
-    );
-  }
+  drawCurrentFlag(
+    locationIndex
+  );
 
   tft.setTextDatum(
     TL_DATUM
